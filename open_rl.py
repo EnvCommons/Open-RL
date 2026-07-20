@@ -6,7 +6,7 @@ from typing import List
 import openai
 from pydantic import BaseModel
 
-from openreward.environments import Environment, JSONObject, ToolOutput, tool, TextBlock
+from openreward.environments import Environment, JSONObject, ToolOutput, terminal, tool, TextBlock
 from prompts import GRADER_TEMPLATE
 
 
@@ -98,7 +98,7 @@ class OpenRL(Environment):
     async def get_prompt(self) -> List[TextBlock]:
         prompt = f"""{self.validated.question}
 
-When you have your answer, submit it using the answer tool."""
+Reply with your final answer as an ordinary message. State the answer itself clearly — your reply is graded against the ground truth."""
         return [TextBlock(text=prompt)]
 
     async def _grade_answer(self, submitted_answer: str) -> dict:
@@ -123,9 +123,16 @@ When you have your answer, submit it using the answer tool."""
 
         return grading_dict
 
+    @terminal
     @tool
     async def answer(self, params: AnswerInput) -> ToolOutput:
-        """Submit your answer to be graded."""
+        """Grade the assistant's final message against the ground truth.
+
+        Terminal tool: hidden from the model, which replies with its answer as
+        an ordinary message rather than calling a tool. The harness routes that
+        message text here for LLM equivalence grading. Since this is the
+        environment's only tool, the model is given no tools at all.
+        """
         grader_output = await self._grade_answer(params.answer)
 
         is_correct = grader_output.get("is_correct", False)

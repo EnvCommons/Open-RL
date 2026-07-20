@@ -36,13 +36,15 @@ Data is sourced from the [TuringEnterprises/Open-RL](https://huggingface.co/data
 
 ## Tools
 
-Single tool:
+None. The model is given no tools: it answers the problem as an ordinary
+message, and that message ends the rollout.
 
-- `answer(answer: str)` - Submit your solution to be graded
+Grading runs through a hidden `@terminal` tool, which sends the message text to
+an LLM grader (gpt-5-mini) alongside the ground truth.
 
 ## Time Horizon
 
-Open-RL is a single-turn environment. Each task requires exactly one tool call to submit an answer. The agent receives a problem, performs reasoning, and submits its final answer.
+Open-RL is a single-turn environment. The agent receives a problem, performs reasoning, and replies with its final answer as an ordinary message, which ends the rollout.
 
 ## Other Environment Requirements
 
