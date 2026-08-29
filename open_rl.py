@@ -71,6 +71,11 @@ def load_data() -> tuple[list[dict], dict[str, str]]:
 tasks, ground_truth = load_data()
 
 
+# Reward for a submission made after the task has already been graded. Negative
+# so repeat submissions are actively discouraged, not merely left unscored.
+REPEAT_SUBMISSION_PENALTY = -0.1
+
+
 class TaskSpec(BaseModel):
     id: str
     domain: str
@@ -94,6 +99,13 @@ class OpenRL(Environment):
 
         self.client = openai.AsyncClient(api_key=api_key)
         self.ground_truth = ground_truth[self.validated.id]
+
+        # Graded submissions this session. @terminal already hides this tool from
+        # the model, so the harness normally invokes it once at the end of the
+        # rollout -- but Environment._call_tool dispatches by name and does not
+        # exclude terminal tools, so a direct second call would re-grade and pay
+        # out again. Defence in depth.
+        self.submitted = 0
 
     async def get_prompt(self) -> List[TextBlock]:
         prompt = f"""{self.validated.question}
@@ -133,6 +145,16 @@ Reply with your final answer as an ordinary message. State the answer itself cle
         message text here for LLM equivalence grading. Since this is the
         environment's only tool, the model is given no tools at all.
         """
+        if self.submitted > 0:
+            return ToolOutput(
+                blocks=[TextBlock(type="text", text="An answer has already been submitted for this task. "
+                                       "This episode is over: it is not re-graded, and repeat "
+                                       "submissions are penalised (reward -0.1).")],
+                metadata={"already_submitted": True, "submission_count": self.submitted},
+                reward=REPEAT_SUBMISSION_PENALTY,
+                finished=True,
+            )
+
         grader_output = await self._grade_answer(params.answer)
 
         is_correct = grader_output.get("is_correct", False)
@@ -140,6 +162,8 @@ Reply with your final answer as an ordinary message. State the answer itself cle
         reward = 1.0 if is_correct else 0.0
 
         result_text = f"{'Correct!' if is_correct else 'Incorrect.'}\n{explanation}"
+
+        self.submitted += 1
 
         return ToolOutput(
             metadata={
