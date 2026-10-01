@@ -157,11 +157,12 @@ Reply with your final answer as an ordinary message. State the answer itself cle
 
         grader_output = await self._grade_answer(params.answer)
 
+        # The grader's explanation is not returned: it routinely quotes the
+        # ground truth, and the model sees both the text and the metadata.
         is_correct = grader_output.get("is_correct", False)
-        explanation = grader_output.get("explanation", "")
         reward = 1.0 if is_correct else 0.0
 
-        result_text = f"{'Correct!' if is_correct else 'Incorrect.'}\n{explanation}"
+        result_text = "Correct!" if is_correct else "Incorrect."
 
         self.submitted += 1
 
@@ -169,7 +170,6 @@ Reply with your final answer as an ordinary message. State the answer itself cle
             metadata={
                 "submitted_answer": params.answer,
                 "is_correct": is_correct,
-                "explanation": explanation,
             },
             blocks=[TextBlock(text=result_text)],
             reward=reward,
