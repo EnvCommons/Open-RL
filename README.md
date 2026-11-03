@@ -13,13 +13,17 @@ Open-RL is an environment sourced from the [Turing Enterprises](https://huggingf
 - Numerical computation and derivations
 - Cross-domain scientific reasoning
 
+## Compute Requirements
+
+Open-RL does not require a sandbox. Agents have no file system or code execution access.
+
 ## License
 
-[MIT](https://opensource.org/licenses/MIT)
+[MIT](https://opensource.org/licenses/MIT). The underlying TuringEnterprises/Open-RL dataset is also released under MIT.
 
 ## Tasks
 
-There are 40 tasks in the train split, covering:
+There are 40 tasks in the `train` split, covering:
 
 - **Physics**: Astrophysics, electromagnetism, quantum mechanics, condensed matter, classical mechanics
 - **Mathematics**: Number theory, special functions, combinatorics, analysis
@@ -28,19 +32,17 @@ There are 40 tasks in the train split, covering:
 
 ## Reward Structure
 
-Binary reward (0 or 1) based on answer correctness. An LLM grader (gpt-5-mini) checks semantic/symbolic equivalence between the submitted answer and ground truth.
+Binary reward (0 or 1) based on answer correctness. An LLM grader (gpt-5-mini) checks semantic/symbolic equivalence between the final message and the ground truth. The grader is re-sampled until it returns a valid verdict. Only the first graded answer is rewarded; a repeat submission gets a reward of -0.1.
 
 ## Data
 
-Data is sourced from the [TuringEnterprises/Open-RL](https://huggingface.co/datasets/TuringEnterprises/Open-RL) dataset on Hugging Face.
+Data is sourced from the [TuringEnterprises/Open-RL](https://huggingface.co/datasets/TuringEnterprises/Open-RL) dataset on Hugging Face and served as a JSON file from the OpenReward platform.
 
 ## Tools
 
-None. The model is given no tools: it answers the problem as an ordinary
-message, and that message ends the rollout.
+None. The model is given no tools: it answers the problem as an ordinary message, and that message ends the rollout.
 
-Grading runs through a hidden `@terminal` tool, which sends the message text to
-an LLM grader (gpt-5-mini) alongside the ground truth.
+Grading runs through a hidden terminal tool, `answer`, which sends the message text to an LLM grader (gpt-5-mini) alongside the ground truth.
 
 ## Time Horizon
 
@@ -48,7 +50,7 @@ Open-RL is a single-turn environment. The agent receives a problem, performs rea
 
 ## Other Environment Requirements
 
-- **OpenAI API Key**: Required for LLM-based grading
+The LLM grader needs an OpenAI API key, passed as the `openai_api_key` secret.
 
 ## Safety
 
@@ -57,11 +59,11 @@ Open-RL presents minimal safety risks. Agents interact only with static STEM pro
 ## Citations
 
 ```bibtex
-@dataset{OpenRL2024,
-  author    = {Turing Enterprises},
-  title     = {Open-RL: Self-contained, verifiable STEM reasoning problems},
-  year      = {2026},
-  publisher = {Hugging Face},
-  url       = {https://huggingface.co/datasets/TuringEnterprises/Open-RL}
+@dataset{turing_2026_open_rl,
+  title        = {Open-RL},
+  author       = {Saurabh Patil and Anshuman Lall and Marko Pavlovic and Chinmayee Shukla and Seetesh Pande and Tejass Mohan Ukarde and Amanda Gollo Bertollo and Mahesh Joshi and Kihwan Han},
+  year         = {2026},
+  publisher    = {Hugging Face},
+  url          = {https://huggingface.co/datasets/TuringEnterprises/Open-RL}
 }
 ```
